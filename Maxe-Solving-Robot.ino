@@ -101,8 +101,8 @@ void setup () {
   // set_motor_speed(240, motorPin1A, motorPin2A, enableA, 0);
   // set_motor_speed(230, motorPin2B, motorPin1B, enableB, 0);
 
-   set_motor_speed(100, motorPin1A, motorPin2A, enableA, 0);
-  set_motor_speed(100, motorPin2B, motorPin1B, enableB, 0);
+  set_motor_speed(100, motorPin1A, motorPin2A, enableA, -1);
+  set_motor_speed(100, motorPin1B, motorPin2B, enableB, 1);
 
   pinMode(SHT_LOX1, OUTPUT);
   pinMode(SHT_LOX2, OUTPUT);
@@ -142,8 +142,8 @@ void loop () {
   int currentPos = encoderA.getCount();
   
 
-  set_motor_speed(output, motorPin1A, motorPin2A, enableA, 0);
-  set_motor_speed(output2, motorPin2B, motorPin1B, enableB, 0);
+  set_motor_speed(output, motorPin1A, motorPin2A, enableA, -1);
+  set_motor_speed(output2, motorPin1B, motorPin2B, enableB, 1);
   // Serial.printf("%lf,%lf\n", output, output2);
   delay(50);
 }
@@ -181,7 +181,7 @@ void set_motor_speed(double speed, byte motorPin1, byte motorPin2, byte enable, 
   else if (speed > 560) {
     speed = 560;
   }
-  if (direction == 0) {
+  if (direction == -1) {
     digitalWrite(motorPin1, LOW);
     digitalWrite(motorPin2, HIGH);
   }
@@ -189,6 +189,11 @@ void set_motor_speed(double speed, byte motorPin1, byte motorPin2, byte enable, 
   else if (direction == 1) {
     digitalWrite(motorPin1, HIGH);
     digitalWrite(motorPin2, LOW);
+  }
+
+  else if (direction == 0) {
+    digitalWrite(motorPin1, LOW);
+    digitalWrite(motorPin1, LOW);
   }
   // Map speed from 0-560 to 0-255 for PWM
   int pwmValue = map(speed, 0, 560, 0, 255);
@@ -222,7 +227,7 @@ double get_motor_speed(Encoder *encoder, float* v1Filt, float* v1Prev){
   // //y(n) - 0.9 y(n - 1) = 0.05 x(n) + 0.05 x(n -1)
   // *v1Prev = speed;
 
-  speed = *v1Filt;
+//   speed = *v1Filt;
   // Serial.printf("%f", speed);
   // //Print theand speed
   // Serial.printf("%f, ", speed);
