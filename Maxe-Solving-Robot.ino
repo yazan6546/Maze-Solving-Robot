@@ -101,8 +101,8 @@ void setup () {
   // set_motor_speed(240, motorPin1A, motorPin2A, enableA, 0);
   // set_motor_speed(230, motorPin2B, motorPin1B, enableB, 0);
 
-   set_motor_speed(100, motorPin1A, motorPin2A, enableA, 0);
-  set_motor_speed(100, motorPin2B, motorPin1B, enableB, 0);
+  set_motor_speed(100, motorPin1A, motorPin2A, enableA, -1, true, 560);
+  set_motor_speed(100, motorPin1B, motorPin2B, enableB, 1, true, 560);
 
   pinMode(SHT_LOX1, OUTPUT);
   pinMode(SHT_LOX2, OUTPUT);
@@ -142,8 +142,8 @@ void loop () {
   int currentPos = encoderA.getCount();
   
 
-  set_motor_speed(output, motorPin1A, motorPin2A, enableA, 0);
-  set_motor_speed(output2, motorPin2B, motorPin1B, enableB, 0);
+  set_motor_speed(output, motorPin1A, motorPin2A, enableA, -1, false, 560);
+  set_motor_speed(output2, motorPin1B, motorPin2B, enableB, 1, false, 560);
   // Serial.printf("%lf,%lf\n", output, output2);
   delay(50);
 }
@@ -172,16 +172,17 @@ void feedback_loop_position() {
 }
 
 
-void set_motor_speed(double speed, byte motorPin1, byte motorPin2, byte enable, byte direction) {
+bool set_motor_speed(double speed, byte motorPin1, byte motorPin2, byte enable, byte direction, bool use_map, int max_speed) {
 
+  int pwm_value;
 
   if (speed < 0) {
     speed = 0;
   }
-  else if (speed > 560) {
-    speed = 560;
+  else if (speed > max_speed) {
+    speed = max_speed;
   }
-  if (direction == 0) {
+  if (direction == -1) {
     digitalWrite(motorPin1, LOW);
     digitalWrite(motorPin2, HIGH);
   }
@@ -190,10 +191,19 @@ void set_motor_speed(double speed, byte motorPin1, byte motorPin2, byte enable, 
     digitalWrite(motorPin1, HIGH);
     digitalWrite(motorPin2, LOW);
   }
+
+  else if (direction == 0) {
+    digitalWrite(motorPin1, LOW);
+    digitalWrite(motorPin1, LOW);
+    return true; // to successfully exit the PID position control loop
+  }
   // Map speed from 0-560 to 0-255 for PWM
-  int pwmValue = map(speed, 0, 560, 0, 255);
+
+  if (use_map)
+     pwm_value = map(speed, 0, max_speed, 0, 255);
 
   analogWrite(enable, pwmValue);
+  return false;
 }
 
 
@@ -222,7 +232,7 @@ double get_motor_speed(Encoder *encoder, float* v1Filt, float* v1Prev){
   // //y(n) - 0.9 y(n - 1) = 0.05 x(n) + 0.05 x(n -1)
   // *v1Prev = speed;
 
-  speed = *v1Filt;
+//   speed = *v1Filt;
   // Serial.printf("%f", speed);
   // //Print theand speed
   // Serial.printf("%f, ", speed);
@@ -374,30 +384,12 @@ bool driveMotor(double control_signal, double error, int motorPin1, int motorPin
   //Therefore, despite the fact that the PWM value is set to the "correct" value, the motor will not move
   //The above value is an empirical value, it depends on the motors perhaps, but 30 seems to work well in my case
 
-  //we set the direction - this is a user-defined value, adjusted for TB6612FNG driver
-  if (motorDirection == -1) //-1 == CCW
-  {
-    digitalWrite(motorPin1, LOW);
-    digitalWrite(motorPin2, HIGH);
-  }
-  else if (motorDirection == 1) // == 1, CW
-  {
-    digitalWrite(motorPin1, HIGH);
-    digitalWrite(motorPin2, LOW);
-  }
-  else // == 0, stop/break
-  {
-    digitalWrite(motorPin1, LOW);
-    digitalWrite(motorPin2, LOW);
-    PWMValue = 0;
+  //we set the direction - this is a user-defined value, adjusted for L298N driver
 
-    return true;
-    //In this block we also shut down the motor and set the PWM to zero
-  }
+  return
+     set_motor_speed(PWMValue, motorPin1, motorPin2, enable, motorDirection false, 255);
+
   //----------------------------------------------------
-  //Then we set the motor speed
-  analogWrite(enable, PWMValue);
-  return false;
   //Optional printing on the terminal to check what's up
   /*
     Serial.print(errorValue);
