@@ -12,7 +12,9 @@ public:
     void handleInterrupt1_inst();
     void handleInterrupt2_inst();
     long oldPosition;
+    long oldPosition_position;
     unsigned long lastTime;
+    unsigned long lastTime_position;
 
 private:
     volatile long encoderCount;

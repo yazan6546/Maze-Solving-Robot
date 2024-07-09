@@ -7,8 +7,7 @@ Encoder *encoderInstanceB = nullptr;
 Encoder::Encoder(uint8_t pinA, uint8_t pinB)
     : pinA(pinA), pinB(pinB), encoderCount(0) {
     // Determine the interrupt numbers for the pins
-    interruptA = digitalPinToInterrupt(pinA);
-    interruptB = digitalPinToInterrupt(pinB);
+    this->interruptA = digitalPinToInterrupt(pinA);
 
     // Assign global pointers based on pin assignments
     if (pinA == 35 && pinB == 32) {
@@ -29,10 +28,8 @@ void Encoder::begin() {
     // Attach interrupts using global pointers and ISR functions
     if (encoderInstanceA == this) {
         attachInterrupt(interruptA, handleInterrupt_channe1A, RISING);
-        attachInterrupt(interruptA, handleInterrupt_channe2A, RISING);
     } else if (encoderInstanceB == this) {
-        attachInterrupt(interruptB, handleInterrupt_channe1B, RISING);
-        attachInterrupt(interruptB, handleInterrupt_channe2B, RISING);
+        attachInterrupt(interruptA, handleInterrupt_channe1B, RISING);
     }
 }
 
@@ -51,13 +48,6 @@ void handleInterrupt_channe1A() {
     }
 }
 
-// Actual ISR code for pin A
-void handleInterrupt_channe2A() {
-    if (encoderInstanceA != nullptr) {
-        encoderInstanceA->handleInterrupt2_inst();
-    }
-}
-
 
 // Actual ISR code for pin B
 void handleInterrupt_channe1B() {
@@ -66,19 +56,13 @@ void handleInterrupt_channe1B() {
     }
 }
 
-// Actual ISR code for pin B
-void handleInterrupt_channe2B() {
-    if (encoderInstanceB != nullptr) {
-        encoderInstanceB->handleInterrupt1_inst();
-    }
-}
 
 // Non-static member function for handling pin A interrupt
 void Encoder::handleInterrupt1_inst() {
     // Handle encoder count for pin A
-    if (digitalRead(this->pinA)) {
+    if (digitalRead(this->pinB)) {
         this->encoderCount++;
-    } else if (digitalRead(this->pinB)) {
+    } else {
         this->encoderCount--;
     }
 }
